@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LCLS Maintenance Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -26,6 +31,10 @@
           const [aiLoading, setAiLoading] = useState(false);
           const [userQuery, setUserQuery] = useState('');
           const [activeSection, setActiveSection] = useState('overview');
+          const [isDarkMode, setIsDarkMode] = useState(() => {
+            const saved = localStorage.getItem('darkMode');
+            return saved ? JSON.parse(saved) : false;
+          });
 
           const overviewRef = useRef(null);
           const equipmentRef = useRef(null);
@@ -188,6 +197,15 @@
           }, []);
 
           useEffect(() => {
+            if (isDarkMode) {
+              document.documentElement.classList.add('dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+            }
+            localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+          }, [isDarkMode]);
+
+          useEffect(() => {
             if (data.length === 0) return;
 
             // Destroy existing charts
@@ -203,11 +221,18 @@
               createTaskCharts();
               createTrendCharts();
             }, 100);
-          }, [data]);
+          }, [data, isDarkMode]);
+
+          const getChartOptions = () => {
+            const textColor = isDarkMode ? '#e5e7eb' : '#1f2937';
+            const gridColor = isDarkMode ? '#374151' : '#e5e7eb';
+            return { textColor, gridColor };
+          };
 
           const createOverviewCharts = () => {
             const stats = calculateStats();
             const ctx = document.getElementById('overviewChart');
+            const { textColor, gridColor } = getChartOptions();
             if (ctx) {
               new Chart(ctx, {
                 type: 'bar',
@@ -229,7 +254,18 @@
                   scales: {
                     y: {
                       beginAtZero: true,
-                      max: 100
+                      max: 100,
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    },
+                    x: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      labels: { color: textColor }
                     }
                   }
                 }
@@ -242,6 +278,7 @@
             const ctx1 = document.getElementById('equipmentFreqChart');
             const ctx2 = document.getElementById('equipmentPerformanceChart');
             const ctx3 = document.getElementById('equipmentDowntimeChart');
+            const { textColor, gridColor } = getChartOptions();
 
             if (ctx1) {
               new Chart(ctx1, {
@@ -257,7 +294,22 @@
                 options: {
                   indexAxis: 'y',
                   responsive: true,
-                  maintainAspectRatio: false
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    },
+                    x: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      labels: { color: textColor }
+                    }
+                  }
                 }
               });
             }
@@ -279,7 +331,18 @@
                   scales: {
                     y: {
                       beginAtZero: true,
-                      max: 100
+                      max: 100,
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    },
+                    x: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      labels: { color: textColor }
                     }
                   }
                 }
@@ -300,7 +363,22 @@
                 },
                 options: {
                   responsive: true,
-                  maintainAspectRatio: false
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    },
+                    x: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      labels: { color: textColor }
+                    }
+                  }
                 }
               });
             }
@@ -310,6 +388,7 @@
             const technicianStats = getTechnicianStats();
             const ctx1 = document.getElementById('techWorkloadChart');
             const ctx2 = document.getElementById('techPerformanceChart');
+            const { textColor, gridColor } = getChartOptions();
 
             const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1'];
 
@@ -325,7 +404,12 @@
                 },
                 options: {
                   responsive: true,
-                  maintainAspectRatio: false
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      labels: { color: textColor }
+                    }
+                  }
                 }
               });
             }
@@ -347,7 +431,18 @@
                   scales: {
                     y: {
                       beginAtZero: true,
-                      max: 100
+                      max: 100,
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    },
+                    x: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      labels: { color: textColor }
                     }
                   }
                 }
@@ -359,6 +454,7 @@
             const taskStats = getTaskStats();
             const ctx1 = document.getElementById('taskFreqChart');
             const ctx2 = document.getElementById('taskDowntimeChart');
+            const { textColor, gridColor } = getChartOptions();
 
             if (ctx1) {
               new Chart(ctx1, {
@@ -373,7 +469,22 @@
                 },
                 options: {
                   responsive: true,
-                  maintainAspectRatio: false
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    },
+                    x: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      labels: { color: textColor }
+                    }
+                  }
                 }
               });
             }
@@ -392,7 +503,22 @@
                 },
                 options: {
                   responsive: true,
-                  maintainAspectRatio: false
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    },
+                    x: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      labels: { color: textColor }
+                    }
+                  }
                 }
               });
             }
@@ -403,6 +529,7 @@
             const ctx1 = document.getElementById('monthlyVolumeChart');
             const ctx2 = document.getElementById('monthlyOnTimeChart');
             const ctx3 = document.getElementById('monthlyDowntimeChart');
+            const { textColor, gridColor } = getChartOptions();
 
             if (ctx1) {
               new Chart(ctx1, {
@@ -428,7 +555,22 @@
                 },
                 options: {
                   responsive: true,
-                  maintainAspectRatio: false
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    },
+                    x: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      labels: { color: textColor }
+                    }
+                  }
                 }
               });
             }
@@ -452,7 +594,18 @@
                   scales: {
                     y: {
                       beginAtZero: true,
-                      max: 100
+                      max: 100,
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    },
+                    x: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      labels: { color: textColor }
                     }
                   }
                 }
@@ -474,7 +627,22 @@
                 },
                 options: {
                   responsive: true,
-                  maintainAspectRatio: false
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    },
+                    x: {
+                      ticks: { color: textColor },
+                      grid: { color: gridColor }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      labels: { color: textColor }
+                    }
+                  }
                 }
               });
             }
@@ -584,13 +752,20 @@
             { id: 'ai', icon: '🤖', label: 'AI' }
           ];
 
-          return h('div', { className: 'min-h-screen bg-gray-50' },
-            h('nav', { className: 'fixed top-0 left-0 right-0 bg-white shadow-md z-50 px-6 py-4' },
+          return h('div', { className: 'min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors' },
+            h('nav', { className: 'fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-md z-50 px-6 py-4 transition-colors' },
               h('div', { className: 'max-w-7xl mx-auto' },
                 h('div', { className: 'flex items-center justify-between mb-4' },
                   h('div', null,
-                    h('h1', { className: 'text-2xl font-bold text-gray-900' }, 'LCLS Maintenance Dashboard'),
-                    h('p', { className: 'text-sm text-gray-600' }, 'Preventive Maintenance Analytics - Q1 2024')
+                    h('h1', { className: 'text-2xl font-bold text-gray-900 dark:text-white' }, 'LCLS Maintenance Dashboard'),
+                    h('p', { className: 'text-sm text-gray-600 dark:text-gray-400' }, 'Preventive Maintenance Analytics - Q1 2024')
+                  ),
+                  h('button', {
+                    onClick: () => setIsDarkMode(!isDarkMode),
+                    className: 'p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors',
+                    title: isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'
+                  },
+                    h('span', { className: 'text-2xl' }, isDarkMode ? '☀️' : '🌙')
                   )
                 ),
                 h('div', { className: 'flex gap-2 justify-center flex-wrap' },
@@ -598,8 +773,8 @@
                     h('button', {
                       key: item.id,
                       onClick: () => scrollToSection(item.id),
-                      className: `flex flex-col items-center px-4 py-2 rounded-lg transition-all hover:bg-gray-100 ${
-                        activeSection === item.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                      className: `flex flex-col items-center px-4 py-2 rounded-lg transition-all hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                        activeSection === item.id ? 'bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'
                       }`,
                       title: item.label
                     },
@@ -614,41 +789,41 @@
             h('div', { className: 'max-w-7xl mx-auto px-6 pt-40 pb-6' },
 
               h('div', { ref: overviewRef, id: 'overview', className: 'mb-12 scroll-mt-40' },
-                h('h2', { className: 'text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2' },
+                h('h2', { className: 'text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2' },
                   h('span', { className: 'text-3xl' }, '📊'),
                   'Overview'
                 ),
                 h('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6' },
-                  h('div', { className: 'bg-white rounded-lg shadow-sm p-6' },
-                    h('h3', { className: 'text-sm text-gray-500 mb-1' }, 'Total Tasks'),
-                    h('p', { className: 'text-3xl font-bold text-gray-900' }, stats.totalTasks)
+                  h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors' },
+                    h('h3', { className: 'text-sm text-gray-500 dark:text-gray-400 mb-1' }, 'Total Tasks'),
+                    h('p', { className: 'text-3xl font-bold text-gray-900 dark:text-white' }, stats.totalTasks)
                   ),
-                  h('div', { className: 'bg-white rounded-lg shadow-sm p-6' },
-                    h('h3', { className: 'text-sm text-gray-500 mb-1' }, 'On-Time Completion'),
-                    h('p', { className: 'text-3xl font-bold text-green-600' }, stats.onTimeRate + '%')
+                  h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors' },
+                    h('h3', { className: 'text-sm text-gray-500 dark:text-gray-400 mb-1' }, 'On-Time Completion'),
+                    h('p', { className: 'text-3xl font-bold text-green-600 dark:text-green-400' }, stats.onTimeRate + '%')
                   ),
-                  h('div', { className: 'bg-white rounded-lg shadow-sm p-6' },
-                    h('h3', { className: 'text-sm text-gray-500 mb-1' }, 'Scheduled Rate'),
-                    h('p', { className: 'text-3xl font-bold text-blue-600' }, stats.scheduledRate + '%')
+                  h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors' },
+                    h('h3', { className: 'text-sm text-gray-500 dark:text-gray-400 mb-1' }, 'Scheduled Rate'),
+                    h('p', { className: 'text-3xl font-bold text-blue-600 dark:text-blue-400' }, stats.scheduledRate + '%')
                   ),
-                  h('div', { className: 'bg-white rounded-lg shadow-sm p-6' },
-                    h('h3', { className: 'text-sm text-gray-500 mb-1' }, 'Total Downtime'),
-                    h('p', { className: 'text-3xl font-bold text-red-600' }, stats.totalDowntime + 'h')
+                  h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors' },
+                    h('h3', { className: 'text-sm text-gray-500 dark:text-gray-400 mb-1' }, 'Total Downtime'),
+                    h('p', { className: 'text-3xl font-bold text-red-600 dark:text-red-400' }, stats.totalDowntime + 'h')
                   )
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Key Metrics Summary'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Key Metrics Summary'),
                   h('div', { style: { height: '300px' } },
                     h('canvas', { id: 'overviewChart' })
                   )
                 ),
-                h('div', { className: 'bg-gray-100 rounded-lg p-6 mb-6' },
-                  h('h3', { className: 'text-lg font-bold text-gray-900 mb-3' }, 'Analysis'),
-                  h('p', { className: 'text-gray-700 mb-2' },
+                h('div', { className: 'bg-gray-100 dark:bg-gray-800 rounded-lg p-6 mb-6 transition-colors' },
+                  h('h3', { className: 'text-lg font-bold text-gray-900 dark:text-white mb-3' }, 'Analysis'),
+                  h('p', { className: 'text-gray-700 dark:text-gray-300 mb-2' },
                     `The facility completed ${stats.totalTasks} maintenance tasks in Q1 2024. On-time completion rate of ${stats.onTimeRate}% shows room for improvement. ${stats.scheduledRate}% of tasks were scheduled, suggesting ${(100 - parseFloat(stats.scheduledRate)).toFixed(1)}% were reactive or emergency work.`
                   ),
-                  h('h3', { className: 'text-lg font-bold text-gray-900 mb-3 mt-4' }, 'Suggestions'),
-                  h('ul', { className: 'text-gray-700 space-y-2' },
+                  h('h3', { className: 'text-lg font-bold text-gray-900 dark:text-white mb-3 mt-4' }, 'Suggestions'),
+                  h('ul', { className: 'text-gray-700 dark:text-gray-300 space-y-2' },
                     h('li', null, '• Increase scheduled maintenance to reduce reactive work and improve uptime'),
                     h('li', null, '• Target on-time completion improvement to 95%+ through better resource planning'),
                     h('li', null, `• Focus on tasks causing downtime - ${stats.tasksWithDowntime} tasks generated ${stats.totalDowntime}h downtime`),
@@ -658,24 +833,24 @@
               ),
 
               h('div', { ref: equipmentRef, id: 'equipment', className: 'mb-12 scroll-mt-40' },
-                h('h2', { className: 'text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2' },
+                h('h2', { className: 'text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2' },
                   h('span', { className: 'text-3xl' }, '⚙️'),
                   'Equipment'
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Equipment Maintenance Frequency'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Equipment Maintenance Frequency'),
                   h('div', { style: { height: '400px' } },
                     h('canvas', { id: 'equipmentFreqChart' })
                   )
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Equipment On-Time Performance'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Equipment On-Time Performance'),
                   h('div', { style: { height: '400px' } },
                     h('canvas', { id: 'equipmentPerformanceChart' })
                   )
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Equipment Downtime Impact'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Equipment Downtime Impact'),
                   h('div', { style: { height: '400px' } },
                     h('canvas', { id: 'equipmentDowntimeChart' })
                   )
@@ -683,45 +858,45 @@
               ),
 
               h('div', { ref: techniciansRef, id: 'technicians', className: 'mb-12 scroll-mt-40' },
-                h('h2', { className: 'text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2' },
+                h('h2', { className: 'text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2' },
                   h('span', { className: 'text-3xl' }, '👥'),
                   'Technicians'
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Technician Workload'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Technician Workload'),
                   h('div', { style: { height: '350px' } },
                     h('canvas', { id: 'techWorkloadChart' })
                   )
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Technician On-Time Performance'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Technician On-Time Performance'),
                   h('div', { style: { height: '350px' } },
                     h('canvas', { id: 'techPerformanceChart' })
                   )
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Technician Performance Summary'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Technician Performance Summary'),
                   h('div', { className: 'overflow-x-auto' },
                     h('table', { className: 'w-full text-left' },
-                      h('thead', { className: 'bg-gray-50' },
+                      h('thead', { className: 'bg-gray-50 dark:bg-gray-700' },
                         h('tr', null,
-                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Technician'),
-                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Total Tasks'),
-                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'On-Time'),
-                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'On-Time %'),
-                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Downtime (hrs)')
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white' }, 'Technician'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white' }, 'Total Tasks'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white' }, 'On-Time'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white' }, 'On-Time %'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white' }, 'Downtime (hrs)')
                         )
                       ),
-                      h('tbody', { className: 'divide-y divide-gray-200' },
+                      h('tbody', { className: 'divide-y divide-gray-200 dark:divide-gray-700' },
                         technicianStats.map((tech, idx) =>
-                          h('tr', { key: idx, className: 'hover:bg-gray-50' },
-                            h('td', { className: 'px-4 py-3 text-sm text-gray-900' }, tech.technician),
-                            h('td', { className: 'px-4 py-3 text-sm text-gray-600' }, tech.total),
-                            h('td', { className: 'px-4 py-3 text-sm text-gray-600' }, tech.onTime),
+                          h('tr', { key: idx, className: 'hover:bg-gray-50 dark:hover:bg-gray-700' },
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-900 dark:text-white' }, tech.technician),
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-600 dark:text-gray-400' }, tech.total),
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-600 dark:text-gray-400' }, tech.onTime),
                             h('td', { className: 'px-4 py-3 text-sm' },
-                              h('span', { className: `font-medium ${tech.onTimeRate >= 80 ? 'text-green-600' : 'text-amber-600'}` }, tech.onTimeRate + '%')
+                              h('span', { className: `font-medium ${tech.onTimeRate >= 80 ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}` }, tech.onTimeRate + '%')
                             ),
-                            h('td', { className: 'px-4 py-3 text-sm text-gray-600' }, tech.downtime.toFixed(1))
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-600 dark:text-gray-400' }, tech.downtime.toFixed(1))
                           )
                         )
                       )
@@ -731,42 +906,42 @@
               ),
 
               h('div', { ref: tasksRef, id: 'tasks', className: 'mb-12 scroll-mt-40' },
-                h('h2', { className: 'text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2' },
+                h('h2', { className: 'text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2' },
                   h('span', { className: 'text-3xl' }, '📋'),
                   'Tasks'
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Task Frequency Distribution'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Task Frequency Distribution'),
                   h('div', { style: { height: '400px' } },
                     h('canvas', { id: 'taskFreqChart' })
                   )
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Average Downtime by Task Type'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Average Downtime by Task Type'),
                   h('div', { style: { height: '400px' } },
                     h('canvas', { id: 'taskDowntimeChart' })
                   )
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Task Type Summary'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Task Type Summary'),
                   h('div', { className: 'overflow-x-auto' },
                     h('table', { className: 'w-full text-left' },
-                      h('thead', { className: 'bg-gray-50' },
+                      h('thead', { className: 'bg-gray-50 dark:bg-gray-700' },
                         h('tr', null,
-                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Task'),
-                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Frequency'),
-                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Total Downtime (hrs)'),
-                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Avg Downtime (hrs)')
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white' }, 'Task'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white' }, 'Frequency'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white' }, 'Total Downtime (hrs)'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white' }, 'Avg Downtime (hrs)')
                         )
                       ),
-                      h('tbody', { className: 'divide-y divide-gray-200' },
+                      h('tbody', { className: 'divide-y divide-gray-200 dark:divide-gray-700' },
                         taskStats.map((task, idx) =>
-                          h('tr', { key: idx, className: 'hover:bg-gray-50' },
-                            h('td', { className: 'px-4 py-3 text-sm text-gray-900' }, task.task),
-                            h('td', { className: 'px-4 py-3 text-sm text-gray-600' }, task.count),
-                            h('td', { className: 'px-4 py-3 text-sm text-gray-600' }, task.totalDowntime.toFixed(1)),
+                          h('tr', { key: idx, className: 'hover:bg-gray-50 dark:hover:bg-gray-700' },
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-900 dark:text-white' }, task.task),
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-600 dark:text-gray-400' }, task.count),
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-600 dark:text-gray-400' }, task.totalDowntime.toFixed(1)),
                             h('td', { className: 'px-4 py-3 text-sm' },
-                              h('span', { className: `font-medium ${task.avgDowntime > 1 ? 'text-red-600' : 'text-green-600'}` }, task.avgDowntime)
+                              h('span', { className: `font-medium ${task.avgDowntime > 1 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}` }, task.avgDowntime)
                             )
                           )
                         )
@@ -777,24 +952,24 @@
               ),
 
               h('div', { ref: trendsRef, id: 'trends', className: 'mb-12 scroll-mt-40' },
-                h('h2', { className: 'text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2' },
+                h('h2', { className: 'text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2' },
                   h('span', { className: 'text-3xl' }, '📈'),
                   'Trends'
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Monthly Task Volume'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Monthly Task Volume'),
                   h('div', { style: { height: '350px' } },
                     h('canvas', { id: 'monthlyVolumeChart' })
                   )
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Monthly On-Time Rate Trend'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Monthly On-Time Rate Trend'),
                   h('div', { style: { height: '350px' } },
                     h('canvas', { id: 'monthlyOnTimeChart' })
                   )
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
-                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Monthly Downtime Trend'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 transition-colors' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'Monthly Downtime Trend'),
                   h('div', { style: { height: '350px' } },
                     h('canvas', { id: 'monthlyDowntimeChart' })
                   )
@@ -802,19 +977,19 @@
               ),
 
               h('div', { ref: aiRef, id: 'ai', className: 'mb-12 scroll-mt-40' },
-                h('h2', { className: 'text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2' },
+                h('h2', { className: 'text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2' },
                   h('span', { className: 'text-3xl' }, '🤖'),
                   'AI Analysis'
                 ),
-                h('div', { className: 'bg-white rounded-lg shadow-sm p-6' },
-                h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'AI-Powered Data Analysis'),
-                h('p', { className: 'text-gray-600 mb-6' }, 'Ask questions about your maintenance data and get AI-powered insights.'),
+                h('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors' },
+                h('h2', { className: 'text-xl font-bold text-gray-900 dark:text-white mb-4' }, 'AI-Powered Data Analysis'),
+                h('p', { className: 'text-gray-600 dark:text-gray-400 mb-6' }, 'Ask questions about your maintenance data and get AI-powered insights.'),
                 h('div', { className: 'mb-4' },
                   h('textarea', {
                     value: userQuery,
                     onChange: (e) => setUserQuery(e.target.value),
                     placeholder: 'Example: Which equipment requires the most attention? What patterns do you see in the downtime data?',
-                    className: 'w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none',
+                    className: 'w-full p-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors',
                     rows: 4
                   })
                 ),
@@ -823,18 +998,18 @@
                   disabled: aiLoading || !userQuery.trim(),
                   className: 'px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors'
                 }, aiLoading ? 'Analyzing...' : 'Ask AI'),
-                aiResponse && h('div', { className: 'mt-6 p-6 bg-blue-50 rounded-lg border border-blue-200' },
-                  h('h3', { className: 'text-lg font-bold text-gray-900 mb-3' }, 'AI Analysis'),
-                  h('div', { className: 'text-gray-700 whitespace-pre-wrap' }, aiResponse)
+                aiResponse && h('div', { className: 'mt-6 p-6 bg-blue-50 dark:bg-blue-900 rounded-lg border border-blue-200 dark:border-blue-800 transition-colors' },
+                  h('h3', { className: 'text-lg font-bold text-gray-900 dark:text-white mb-3' }, 'AI Analysis'),
+                  h('div', { className: 'text-gray-700 dark:text-gray-300 whitespace-pre-wrap' }, aiResponse)
                 ),
-                h('div', { className: 'mt-8 p-6 bg-gray-50 rounded-lg' },
-                  h('h3', { className: 'text-lg font-bold text-gray-900 mb-3' }, 'Sample Questions'),
-                  h('ul', { className: 'space-y-2 text-gray-700' },
-                    h('li', { className: 'cursor-pointer hover:text-blue-600', onClick: () => setUserQuery('Which equipment has the highest failure rate?') }, '• Which equipment has the highest failure rate?'),
-                    h('li', { className: 'cursor-pointer hover:text-blue-600', onClick: () => setUserQuery("What's causing the most downtime?") }, "• What's causing the most downtime?"),
-                    h('li', { className: 'cursor-pointer hover:text-blue-600', onClick: () => setUserQuery('Which technicians need additional support?') }, '• Which technicians need additional support?'),
-                    h('li', { className: 'cursor-pointer hover:text-blue-600', onClick: () => setUserQuery('What maintenance tasks should we prioritize?') }, '• What maintenance tasks should we prioritize?'),
-                    h('li', { className: 'cursor-pointer hover:text-blue-600', onClick: () => setUserQuery('Are there any concerning trends in the data?') }, '• Are there any concerning trends in the data?')
+                h('div', { className: 'mt-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors' },
+                  h('h3', { className: 'text-lg font-bold text-gray-900 dark:text-white mb-3' }, 'Sample Questions'),
+                  h('ul', { className: 'space-y-2 text-gray-700 dark:text-gray-300' },
+                    h('li', { className: 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400', onClick: () => setUserQuery('Which equipment has the highest failure rate?') }, '• Which equipment has the highest failure rate?'),
+                    h('li', { className: 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400', onClick: () => setUserQuery("What's causing the most downtime?") }, "• What's causing the most downtime?"),
+                    h('li', { className: 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400', onClick: () => setUserQuery('Which technicians need additional support?') }, '• Which technicians need additional support?'),
+                    h('li', { className: 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400', onClick: () => setUserQuery('What maintenance tasks should we prioritize?') }, '• What maintenance tasks should we prioritize?'),
+                    h('li', { className: 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400', onClick: () => setUserQuery('Are there any concerning trends in the data?') }, '• Are there any concerning trends in the data?')
                   )
                 )
                 )
