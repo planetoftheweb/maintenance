@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LCLS Maintenance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        const { useState, useEffect, useRef, createElement: h } = React;
+
+        const MaintenanceDashboard = () => {
+          const [data, setData] = useState([]);
+          const [aiResponse, setAiResponse] = useState('');
+          const [aiLoading, setAiLoading] = useState(false);
+          const [userQuery, setUserQuery] = useState('');
+          const [activeSection, setActiveSection] = useState('overview');
+
+          const overviewRef = useRef(null);
+          const equipmentRef = useRef(null);
+          const techniciansRef = useRef(null);
+          const tasksRef = useRef(null);
+          const trendsRef = useRef(null);
+          const aiRef = useRef(null);
+
+          const scrollToSection = (sectionId) => {
+            const refs = {
+              overview: overviewRef,
+              equipment: equipmentRef,
+              technicians: techniciansRef,
+              tasks: tasksRef,
+              trends: trendsRef,
+              ai: aiRef
+            };
+
+            refs[sectionId]?.current?.scrollIntoView({ behavior: 'smooth' });
+            setActiveSection(sectionId);
+          };
+
+          const csvData = `Date,Equipment,Task Performed,Technician,Scheduled,Completed On Time,Downtime Impact (hrs)
+2024-03-22,Vacuum Chamber,Sensor Inspection,J. Lin,N,Y,0.0
+2024-01-30,Laser Alignment System,Sensor Inspection,J. Lin,Y,Y,0.0
+2024-02-11,X-ray Detector,Filter Replacement,S. Ito,Y,N,2.9
+2024-03-19,Power Supply Unit,Lubrication,S. Ito,Y,Y,0.0
+2024-03-18,Power Supply Unit,Cable Routing,J. Lin,Y,Y,0.0
+2024-02-13,Optics Bench,Leak Test,T. Patel,Y,Y,0.0
+2024-02-06,Sample Injector,Calibration,S. Ito,Y,N,2.3
+2024-02-03,X-ray Detector,Valve Check,M. Chen,Y,N,2.1
+2024-02-26,Power Supply Unit,Calibration,A. Gomez,Y,N,1.9
+2024-03-10,Cryo Pump,Lubrication,K. Lopez,N,Y,0.0
+2024-01-14,X-ray Detector,Cable Routing,A. Gomez,Y,Y,0.0
+2024-02-23,X-ray Detector,Filter Replacement,R. Diaz,Y,Y,0.0
+2024-03-01,Cooling System,Calibration,M. Chen,N,N,2.5
+2024-01-14,Optics Bench,Cable Routing,S. Ito,Y,Y,0.0
+2024-02-01,Cooling System,Valve Check,J. Lin,Y,N,0.6
+2024-01-08,Cryo Pump,Firmware Update,J. Lin,Y,N,0.3
+2024-02-02,Vacuum Chamber,Calibration,K. Lopez,Y,Y,0.0
+2024-03-10,Sample Injector,Leak Test,S. Ito,N,N,2.2
+2024-01-08,Motion Control Stage,Valve Check,J. Lin,Y,N,2.5
+2024-02-27,Data Acquisition Rack,Filter Replacement,M. Chen,Y,N,2.4
+2024-03-05,Cooling System,Cable Routing,K. Lopez,N,Y,0.0
+2024-03-24,Optics Bench,Valve Check,A. Gomez,N,Y,0.0
+2024-03-17,Cooling System,Valve Check,T. Patel,N,N,0.6
+2024-03-11,Cryo Pump,Cooling Line Flush,T. Patel,Y,Y,0.0
+2024-02-28,Optics Bench,Valve Check,A. Gomez,Y,Y,0.0
+2024-03-10,X-ray Detector,Valve Check,M. Chen,N,N,0.6
+2024-01-22,Data Acquisition Rack,Sensor Inspection,T. Patel,N,Y,0.0
+2024-01-06,Sample Injector,Leak Test,K. Lopez,Y,Y,0.0
+2024-01-27,Cryo Pump,Firmware Update,T. Patel,Y,Y,0.0
+2024-02-27,Data Acquisition Rack,Cooling Line Flush,T. Patel,N,Y,0.0
+2024-02-07,Optics Bench,Alignment Verification,K. Lopez,N,Y,0.0
+2024-01-25,Cryo Pump,Leak Test,T. Patel,N,Y,0.0
+2024-01-18,Motion Control Stage,Firmware Update,T. Patel,Y,N,0.7
+2024-03-06,X-ray Detector,Leak Test,A. Gomez,N,Y,0.0
+2024-02-17,Vacuum Chamber,Cooling Line Flush,J. Lin,N,Y,0.0
+2024-02-29,Power Supply Unit,Alignment Verification,J. Lin,Y,Y,0.0
+2024-01-09,Optics Bench,Leak Test,T. Patel,N,Y,0.0
+2024-02-17,Cooling System,Firmware Update,J. Lin,Y,Y,0.0
+2024-01-24,Data Acquisition Rack,Alignment Verification,A. Gomez,Y,Y,0.0
+2024-01-02,Vacuum Chamber,Filter Replacement,M. Chen,Y,Y,0.0
+2024-01-06,Data Acquisition Rack,Sensor Inspection,A. Gomez,N,Y,0.0
+2024-01-28,Motion Control Stage,Calibration,R. Diaz,N,Y,0.0
+2024-01-20,Motion Control Stage,Firmware Update,A. Gomez,N,Y,0.0
+2024-02-16,Vacuum Chamber,Alignment Verification,T. Patel,N,Y,0.0
+2024-01-22,Power Supply Unit,Lubrication,A. Gomez,N,Y,0.0
+2024-02-17,Laser Alignment System,Lubrication,T. Patel,Y,N,2.5
+2024-01-16,Laser Alignment System,Cooling Line Flush,J. Lin,Y,Y,0.0
+2024-03-05,Optics Bench,Filter Replacement,J. Lin,Y,Y,0.0
+2024-03-13,Sample Injector,Filter Replacement,A. Gomez,Y,Y,0.0
+2024-02-29,Sample Injector,Lubrication,M. Chen,Y,Y,0.0
+2024-03-16,Cryo Pump,Cable Routing,T. Patel,Y,N,2.3
+2024-01-10,Vacuum Chamber,Leak Test,R. Diaz,N,N,0.2
+2024-01-25,Optics Bench,Calibration,J. Lin,N,Y,0.0
+2024-01-02,X-ray Detector,Calibration,T. Patel,Y,Y,0.0
+2024-02-24,Motion Control Stage,Calibration,M. Chen,Y,Y,0.0
+2024-01-24,Motion Control Stage,Filter Replacement,M. Chen,N,Y,0.0
+2024-03-18,Power Supply Unit,Leak Test,R. Diaz,N,Y,0.0
+2024-01-31,Motion Control Stage,Filter Replacement,J. Lin,Y,Y,0.0
+2024-02-17,X-ray Detector,Lubrication,K. Lopez,Y,Y,0.0
+2024-01-02,Cooling System,Alignment Verification,S. Ito,Y,Y,0.0
+2024-02-21,Cryo Pump,Cable Routing,S. Ito,N,Y,0.0
+2024-01-20,Motion Control Stage,Filter Replacement,T. Patel,Y,Y,0.0
+2024-03-02,Sample Injector,Cooling Line Flush,M. Chen,N,Y,0.0
+2024-02-21,Cooling System,Leak Test,M. Chen,Y,Y,0.0
+2024-02-02,Cryo Pump,Cable Routing,S. Ito,N,Y,0.0
+2024-03-17,Laser Alignment System,Filter Replacement,T. Patel,Y,N,0.8
+2024-03-06,Cryo Pump,Calibration,M. Chen,Y,N,1.5
+2024-03-12,Cooling System,Leak Test,M. Chen,Y,Y,0.0
+2024-01-09,X-ray Detector,Calibration,S. Ito,Y,Y,0.0
+2024-03-05,X-ray Detector,Calibration,K. Lopez,Y,Y,0.0
+2024-03-04,Optics Bench,Valve Check,A. Gomez,N,Y,0.0
+2024-01-26,X-ray Detector,Leak Test,R. Diaz,N,N,0.9
+2024-01-14,Cooling System,Firmware Update,R. Diaz,N,Y,0.0
+2024-02-26,Vacuum Chamber,Valve Check,T. Patel,N,Y,0.0
+2024-01-17,Sample Injector,Sensor Inspection,M. Chen,Y,Y,0.0
+2024-01-30,Laser Alignment System,Sensor Inspection,A. Gomez,N,Y,0.0
+2024-02-29,Sample Injector,Alignment Verification,S. Ito,Y,Y,0.0
+2024-02-15,Vacuum Chamber,Sensor Inspection,K. Lopez,Y,Y,0.0
+2024-01-06,Motion Control Stage,Sensor Inspection,K. Lopez,N,Y,0.0
+2024-01-29,Motion Control Stage,Calibration,R. Diaz,N,Y,0.0
+2024-03-23,Optics Bench,Lubrication,M. Chen,N,Y,0.0
+2024-02-14,Cryo Pump,Leak Test,M. Chen,N,Y,0.0
+2024-01-30,Optics Bench,Firmware Update,M. Chen,Y,Y,0.0
+2024-03-14,Sample Injector,Alignment Verification,A. Gomez,Y,N,0.3
+2024-03-13,Cooling System,Firmware Update,M. Chen,Y,Y,0.0
+2024-03-17,X-ray Detector,Alignment Verification,A. Gomez,N,Y,0.0
+2024-01-23,Data Acquisition Rack,Cable Routing,J. Lin,N,Y,0.0
+2024-01-16,Cooling System,Filter Replacement,S. Ito,Y,Y,0.0
+2024-02-18,Sample Injector,Filter Replacement,J. Lin,Y,N,1.3
+2024-02-22,Data Acquisition Rack,Valve Check,K. Lopez,Y,Y,0.0
+2024-01-12,Cryo Pump,Sensor Inspection,A. Gomez,N,Y,0.0
+2024-01-22,Cryo Pump,Calibration,K. Lopez,N,Y,0.0
+2024-01-05,X-ray Detector,Filter Replacement,S. Ito,Y,N,3.0
+2024-02-10,Cooling System,Sensor Inspection,K. Lopez,Y,N,1.2
+2024-02-15,Sample Injector,Valve Check,A. Gomez,Y,Y,0.0
+2024-03-07,Optics Bench,Lubrication,M. Chen,N,Y,0.0
+2024-03-24,Power Supply Unit,Cooling Line Flush,T. Patel,N,Y,0.0
+2024-01-25,Data Acquisition Rack,Firmware Update,K. Lopez,Y,Y,0.0
+2024-01-25,Cryo Pump,Firmware Update,R. Diaz,N,Y,0.0
+2024-01-24,Cryo Pump,Cooling Line Flush,A. Gomez,Y,Y,0.0
+2024-02-08,Power Supply Unit,Valve Check,J. Lin,N,Y,0.0
+2024-03-24,Vacuum Chamber,Lubrication,K. Lopez,Y,Y,0.0
+2024-03-21,Optics Bench,Firmware Update,S. Ito,Y,Y,0.0
+2024-01-14,Motion Control Stage,Calibration,S. Ito,N,N,1.4
+2024-03-20,Vacuum Chamber,Calibration,J. Lin,Y,N,2.7
+2024-01-09,Data Acquisition Rack,Leak Test,J. Lin,N,Y,0.0
+2024-02-20,Optics Bench,Valve Check,K. Lopez,N,Y,0.0
+2024-02-11,Motion Control Stage,Sensor Inspection,R. Diaz,Y,Y,0.0
+2024-02-09,Sample Injector,Cooling Line Flush,T. Patel,N,Y,0.0
+2024-02-25,Sample Injector,Calibration,T. Patel,N,Y,0.0
+2024-02-20,Laser Alignment System,Leak Test,R. Diaz,Y,N,0.8
+2024-02-01,Optics Bench,Leak Test,A. Gomez,Y,Y,0.0
+2024-02-10,Cooling System,Leak Test,M. Chen,N,Y,0.0
+2024-02-06,Cooling System,Firmware Update,A. Gomez,Y,Y,0.0
+2024-03-18,Power Supply Unit,Alignment Verification,R. Diaz,Y,Y,0.0
+2024-02-24,Power Supply Unit,Leak Test,M. Chen,Y,Y,0.0
+2024-02-06,Power Supply Unit,Cable Routing,S. Ito,N,N,0.3
+2024-02-14,Laser Alignment System,Valve Check,M. Chen,Y,Y,0.0
+2024-02-26,Cooling System,Cooling Line Flush,J. Lin,N,Y,0.0
+2024-02-29,Data Acquisition Rack,Cable Routing,T. Patel,N,Y,0.0`;
+
+          useEffect(() => {
+            const lines = csvData.trim().split('\n');
+            const parsed = lines.slice(1).map(line => {
+              const values = line.split(',');
+              return {
+                date: values[0],
+                equipment: values[1],
+                task: values[2],
+                technician: values[3],
+                scheduled: values[4] === 'Y',
+                completedOnTime: values[5] === 'Y',
+                downtime: parseFloat(values[6])
+              };
+            });
+            setData(parsed);
+          }, []);
+
+          useEffect(() => {
+            if (data.length === 0) return;
+
+            // Destroy existing charts
+            Chart.helpers.each(Chart.instances, function(instance) {
+              instance.destroy();
+            });
+
+            // Create all charts at once
+            setTimeout(() => {
+              createOverviewCharts();
+              createEquipmentCharts();
+              createTechnicianCharts();
+              createTaskCharts();
+              createTrendCharts();
+            }, 100);
+          }, [data]);
+
+          const createOverviewCharts = () => {
+            const stats = calculateStats();
+            const ctx = document.getElementById('overviewChart');
+            if (ctx) {
+              new Chart(ctx, {
+                type: 'bar',
+                data: {
+                  labels: ['Scheduled', 'On-Time', 'With Downtime'],
+                  datasets: [{
+                    label: 'Percentage',
+                    data: [
+                      parseFloat(stats.scheduledRate),
+                      parseFloat(stats.onTimeRate),
+                      parseFloat(((stats.tasksWithDowntime / stats.totalTasks) * 100).toFixed(1))
+                    ],
+                    backgroundColor: '#3b82f6'
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      max: 100
+                    }
+                  }
+                }
+              });
+            }
+          };
+
+          const createEquipmentCharts = () => {
+            const equipmentStats = getEquipmentStats();
+            const ctx1 = document.getElementById('equipmentFreqChart');
+            const ctx2 = document.getElementById('equipmentPerformanceChart');
+            const ctx3 = document.getElementById('equipmentDowntimeChart');
+
+            if (ctx1) {
+              new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                  labels: equipmentStats.map(e => e.equipment),
+                  datasets: [{
+                    label: 'Total Tasks',
+                    data: equipmentStats.map(e => e.total),
+                    backgroundColor: '#3b82f6'
+                  }]
+                },
+                options: {
+                  indexAxis: 'y',
+                  responsive: true,
+                  maintainAspectRatio: false
+                }
+              });
+            }
+
+            if (ctx2) {
+              new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                  labels: equipmentStats.map(e => e.equipment),
+                  datasets: [{
+                    label: 'On-Time %',
+                    data: equipmentStats.map(e => parseFloat(e.onTimeRate)),
+                    backgroundColor: '#10b981'
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      max: 100
+                    }
+                  }
+                }
+              });
+            }
+
+            if (ctx3) {
+              const downtimeData = equipmentStats.filter(e => e.downtime > 0).sort((a, b) => b.downtime - a.downtime);
+              new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                  labels: downtimeData.map(e => e.equipment),
+                  datasets: [{
+                    label: 'Downtime (hrs)',
+                    data: downtimeData.map(e => e.downtime),
+                    backgroundColor: '#ef4444'
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false
+                }
+              });
+            }
+          };
+
+          const createTechnicianCharts = () => {
+            const technicianStats = getTechnicianStats();
+            const ctx1 = document.getElementById('techWorkloadChart');
+            const ctx2 = document.getElementById('techPerformanceChart');
+
+            const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1'];
+
+            if (ctx1) {
+              new Chart(ctx1, {
+                type: 'pie',
+                data: {
+                  labels: technicianStats.map(t => t.technician),
+                  datasets: [{
+                    data: technicianStats.map(t => t.total),
+                    backgroundColor: COLORS
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false
+                }
+              });
+            }
+
+            if (ctx2) {
+              new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                  labels: technicianStats.map(t => t.technician),
+                  datasets: [{
+                    label: 'On-Time %',
+                    data: technicianStats.map(t => t.onTimeRate),
+                    backgroundColor: '#8b5cf6'
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      max: 100
+                    }
+                  }
+                }
+              });
+            }
+          };
+
+          const createTaskCharts = () => {
+            const taskStats = getTaskStats();
+            const ctx1 = document.getElementById('taskFreqChart');
+            const ctx2 = document.getElementById('taskDowntimeChart');
+
+            if (ctx1) {
+              new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                  labels: taskStats.map(t => t.task),
+                  datasets: [{
+                    label: 'Count',
+                    data: taskStats.map(t => t.count),
+                    backgroundColor: '#6366f1'
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false
+                }
+              });
+            }
+
+            if (ctx2) {
+              const downtimeData = taskStats.filter(t => t.avgDowntime > 0).sort((a, b) => b.avgDowntime - a.avgDowntime);
+              new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                  labels: downtimeData.map(t => t.task),
+                  datasets: [{
+                    label: 'Avg Downtime (hrs)',
+                    data: downtimeData.map(t => t.avgDowntime),
+                    backgroundColor: '#f59e0b'
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false
+                }
+              });
+            }
+          };
+
+          const createTrendCharts = () => {
+            const monthlyTrend = getMonthlyTrend();
+            const ctx1 = document.getElementById('monthlyVolumeChart');
+            const ctx2 = document.getElementById('monthlyOnTimeChart');
+            const ctx3 = document.getElementById('monthlyDowntimeChart');
+
+            if (ctx1) {
+              new Chart(ctx1, {
+                type: 'line',
+                data: {
+                  labels: monthlyTrend.map(m => m.month),
+                  datasets: [
+                    {
+                      label: 'Total Tasks',
+                      data: monthlyTrend.map(m => m.total),
+                      borderColor: '#3b82f6',
+                      backgroundColor: '#3b82f620',
+                      tension: 0.1
+                    },
+                    {
+                      label: 'On-Time',
+                      data: monthlyTrend.map(m => m.onTime),
+                      borderColor: '#10b981',
+                      backgroundColor: '#10b98120',
+                      tension: 0.1
+                    }
+                  ]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false
+                }
+              });
+            }
+
+            if (ctx2) {
+              new Chart(ctx2, {
+                type: 'line',
+                data: {
+                  labels: monthlyTrend.map(m => m.month),
+                  datasets: [{
+                    label: 'On-Time %',
+                    data: monthlyTrend.map(m => m.onTimeRate),
+                    borderColor: '#8b5cf6',
+                    backgroundColor: '#8b5cf620',
+                    tension: 0.1
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      max: 100
+                    }
+                  }
+                }
+              });
+            }
+
+            if (ctx3) {
+              new Chart(ctx3, {
+                type: 'line',
+                data: {
+                  labels: monthlyTrend.map(m => m.month),
+                  datasets: [{
+                    label: 'Downtime (hrs)',
+                    data: monthlyTrend.map(m => m.downtime),
+                    borderColor: '#ef4444',
+                    backgroundColor: '#ef444420',
+                    tension: 0.1
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false
+                }
+              });
+            }
+          };
+
+          const askAI = async () => {
+            if (!userQuery.trim()) return;
+            setAiLoading(true);
+            setAiResponse('Note: AI integration requires API key configuration. This is a demo interface.');
+            setAiLoading(false);
+          };
+
+          const calculateStats = () => {
+            const totalTasks = data.length;
+            const scheduledTasks = data.filter(d => d.scheduled).length;
+            const completedOnTime = data.filter(d => d.completedOnTime).length;
+            const totalDowntime = data.reduce((sum, d) => sum + d.downtime, 0);
+            const tasksWithDowntime = data.filter(d => d.downtime > 0).length;
+
+            return {
+              totalTasks,
+              scheduledTasks,
+              scheduledRate: ((scheduledTasks / totalTasks) * 100).toFixed(1),
+              completedOnTime,
+              onTimeRate: ((completedOnTime / totalTasks) * 100).toFixed(1),
+              totalDowntime: totalDowntime.toFixed(1),
+              avgDowntime: (totalDowntime / tasksWithDowntime).toFixed(2),
+              tasksWithDowntime
+            };
+          };
+
+          const getEquipmentStats = () => {
+            const equipmentMap = {};
+            data.forEach(d => {
+              if (!equipmentMap[d.equipment]) {
+                equipmentMap[d.equipment] = { equipment: d.equipment, total: 0, onTime: 0, downtime: 0 };
+              }
+              equipmentMap[d.equipment].total += 1;
+              if (d.completedOnTime) equipmentMap[d.equipment].onTime += 1;
+              equipmentMap[d.equipment].downtime += d.downtime;
+            });
+
+            return Object.values(equipmentMap)
+              .map(e => ({ ...e, onTimeRate: ((e.onTime / e.total) * 100).toFixed(1) }))
+              .sort((a, b) => b.total - a.total);
+          };
+
+          const getTechnicianStats = () => {
+            const techMap = {};
+            data.forEach(d => {
+              if (!techMap[d.technician]) {
+                techMap[d.technician] = { technician: d.technician, total: 0, onTime: 0, downtime: 0 };
+              }
+              techMap[d.technician].total += 1;
+              if (d.completedOnTime) techMap[d.technician].onTime += 1;
+              techMap[d.technician].downtime += d.downtime;
+            });
+
+            return Object.values(techMap)
+              .map(t => ({ ...t, onTimeRate: parseFloat(((t.onTime / t.total) * 100).toFixed(1)) }))
+              .sort((a, b) => b.total - a.total);
+          };
+
+          const getTaskStats = () => {
+            const taskMap = {};
+            data.forEach(d => {
+              if (!taskMap[d.task]) {
+                taskMap[d.task] = { task: d.task, count: 0, avgDowntime: 0, totalDowntime: 0 };
+              }
+              taskMap[d.task].count += 1;
+              taskMap[d.task].totalDowntime += d.downtime;
+            });
+
+            return Object.values(taskMap)
+              .map(t => ({ ...t, avgDowntime: parseFloat((t.totalDowntime / t.count).toFixed(2)) }))
+              .sort((a, b) => b.count - a.count);
+          };
+
+          const getMonthlyTrend = () => {
+            const monthMap = {};
+            data.forEach(d => {
+              const month = d.date.substring(0, 7);
+              if (!monthMap[month]) {
+                monthMap[month] = { month, total: 0, onTime: 0, downtime: 0 };
+              }
+              monthMap[month].total += 1;
+              if (d.completedOnTime) monthMap[month].onTime += 1;
+              monthMap[month].downtime += d.downtime;
+            });
+
+            return Object.values(monthMap)
+              .sort((a, b) => a.month.localeCompare(b.month))
+              .map(m => ({ ...m, onTimeRate: parseFloat(((m.onTime / m.total) * 100).toFixed(1)) }));
+          };
+
+          const stats = calculateStats();
+          const equipmentStats = getEquipmentStats();
+          const technicianStats = getTechnicianStats();
+          const taskStats = getTaskStats();
+
+          const navItems = [
+            { id: 'overview', icon: '📊', label: 'Overview' },
+            { id: 'equipment', icon: '⚙️', label: 'Equipment' },
+            { id: 'technicians', icon: '👥', label: 'Technicians' },
+            { id: 'tasks', icon: '📋', label: 'Tasks' },
+            { id: 'trends', icon: '📈', label: 'Trends' },
+            { id: 'ai', icon: '🤖', label: 'AI' }
+          ];
+
+          return h('div', { className: 'min-h-screen bg-gray-50' },
+            h('nav', { className: 'fixed top-0 left-0 right-0 bg-white shadow-md z-50 px-6 py-4' },
+              h('div', { className: 'max-w-7xl mx-auto' },
+                h('div', { className: 'flex items-center justify-between mb-4' },
+                  h('div', null,
+                    h('h1', { className: 'text-2xl font-bold text-gray-900' }, 'LCLS Maintenance Dashboard'),
+                    h('p', { className: 'text-sm text-gray-600' }, 'Preventive Maintenance Analytics - Q1 2024')
+                  )
+                ),
+                h('div', { className: 'flex gap-2 justify-center flex-wrap' },
+                  navItems.map(item =>
+                    h('button', {
+                      key: item.id,
+                      onClick: () => scrollToSection(item.id),
+                      className: `flex flex-col items-center px-4 py-2 rounded-lg transition-all hover:bg-gray-100 ${
+                        activeSection === item.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                      }`,
+                      title: item.label
+                    },
+                      h('span', { className: 'text-2xl mb-1' }, item.icon),
+                      h('span', { className: 'text-xs font-medium' }, item.label)
+                    )
+                  )
+                )
+              )
+            ),
+
+            h('div', { className: 'max-w-7xl mx-auto px-6 pt-40 pb-6' },
+
+              h('div', { ref: overviewRef, id: 'overview', className: 'mb-12 scroll-mt-40' },
+                h('h2', { className: 'text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2' },
+                  h('span', { className: 'text-3xl' }, '📊'),
+                  'Overview'
+                ),
+                h('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6' },
+                  h('div', { className: 'bg-white rounded-lg shadow-sm p-6' },
+                    h('h3', { className: 'text-sm text-gray-500 mb-1' }, 'Total Tasks'),
+                    h('p', { className: 'text-3xl font-bold text-gray-900' }, stats.totalTasks)
+                  ),
+                  h('div', { className: 'bg-white rounded-lg shadow-sm p-6' },
+                    h('h3', { className: 'text-sm text-gray-500 mb-1' }, 'On-Time Completion'),
+                    h('p', { className: 'text-3xl font-bold text-green-600' }, stats.onTimeRate + '%')
+                  ),
+                  h('div', { className: 'bg-white rounded-lg shadow-sm p-6' },
+                    h('h3', { className: 'text-sm text-gray-500 mb-1' }, 'Scheduled Rate'),
+                    h('p', { className: 'text-3xl font-bold text-blue-600' }, stats.scheduledRate + '%')
+                  ),
+                  h('div', { className: 'bg-white rounded-lg shadow-sm p-6' },
+                    h('h3', { className: 'text-sm text-gray-500 mb-1' }, 'Total Downtime'),
+                    h('p', { className: 'text-3xl font-bold text-red-600' }, stats.totalDowntime + 'h')
+                  )
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Key Metrics Summary'),
+                  h('div', { style: { height: '300px' } },
+                    h('canvas', { id: 'overviewChart' })
+                  )
+                ),
+                h('div', { className: 'bg-gray-100 rounded-lg p-6 mb-6' },
+                  h('h3', { className: 'text-lg font-bold text-gray-900 mb-3' }, 'Analysis'),
+                  h('p', { className: 'text-gray-700 mb-2' },
+                    `The facility completed ${stats.totalTasks} maintenance tasks in Q1 2024. On-time completion rate of ${stats.onTimeRate}% shows room for improvement. ${stats.scheduledRate}% of tasks were scheduled, suggesting ${(100 - parseFloat(stats.scheduledRate)).toFixed(1)}% were reactive or emergency work.`
+                  ),
+                  h('h3', { className: 'text-lg font-bold text-gray-900 mb-3 mt-4' }, 'Suggestions'),
+                  h('ul', { className: 'text-gray-700 space-y-2' },
+                    h('li', null, '• Increase scheduled maintenance to reduce reactive work and improve uptime'),
+                    h('li', null, '• Target on-time completion improvement to 95%+ through better resource planning'),
+                    h('li', null, `• Focus on tasks causing downtime - ${stats.tasksWithDowntime} tasks generated ${stats.totalDowntime}h downtime`),
+                    h('li', null, `• Average downtime per incident is ${stats.avgDowntime}h - identify patterns to reduce impact`)
+                  )
+                )
+              ),
+
+              h('div', { ref: equipmentRef, id: 'equipment', className: 'mb-12 scroll-mt-40' },
+                h('h2', { className: 'text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2' },
+                  h('span', { className: 'text-3xl' }, '⚙️'),
+                  'Equipment'
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Equipment Maintenance Frequency'),
+                  h('div', { style: { height: '400px' } },
+                    h('canvas', { id: 'equipmentFreqChart' })
+                  )
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Equipment On-Time Performance'),
+                  h('div', { style: { height: '400px' } },
+                    h('canvas', { id: 'equipmentPerformanceChart' })
+                  )
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Equipment Downtime Impact'),
+                  h('div', { style: { height: '400px' } },
+                    h('canvas', { id: 'equipmentDowntimeChart' })
+                  )
+                )
+              ),
+
+              h('div', { ref: techniciansRef, id: 'technicians', className: 'mb-12 scroll-mt-40' },
+                h('h2', { className: 'text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2' },
+                  h('span', { className: 'text-3xl' }, '👥'),
+                  'Technicians'
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Technician Workload'),
+                  h('div', { style: { height: '350px' } },
+                    h('canvas', { id: 'techWorkloadChart' })
+                  )
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Technician On-Time Performance'),
+                  h('div', { style: { height: '350px' } },
+                    h('canvas', { id: 'techPerformanceChart' })
+                  )
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Technician Performance Summary'),
+                  h('div', { className: 'overflow-x-auto' },
+                    h('table', { className: 'w-full text-left' },
+                      h('thead', { className: 'bg-gray-50' },
+                        h('tr', null,
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Technician'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Total Tasks'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'On-Time'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'On-Time %'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Downtime (hrs)')
+                        )
+                      ),
+                      h('tbody', { className: 'divide-y divide-gray-200' },
+                        technicianStats.map((tech, idx) =>
+                          h('tr', { key: idx, className: 'hover:bg-gray-50' },
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-900' }, tech.technician),
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-600' }, tech.total),
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-600' }, tech.onTime),
+                            h('td', { className: 'px-4 py-3 text-sm' },
+                              h('span', { className: `font-medium ${tech.onTimeRate >= 80 ? 'text-green-600' : 'text-amber-600'}` }, tech.onTimeRate + '%')
+                            ),
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-600' }, tech.downtime.toFixed(1))
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+              ),
+
+              h('div', { ref: tasksRef, id: 'tasks', className: 'mb-12 scroll-mt-40' },
+                h('h2', { className: 'text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2' },
+                  h('span', { className: 'text-3xl' }, '📋'),
+                  'Tasks'
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Task Frequency Distribution'),
+                  h('div', { style: { height: '400px' } },
+                    h('canvas', { id: 'taskFreqChart' })
+                  )
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Average Downtime by Task Type'),
+                  h('div', { style: { height: '400px' } },
+                    h('canvas', { id: 'taskDowntimeChart' })
+                  )
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Task Type Summary'),
+                  h('div', { className: 'overflow-x-auto' },
+                    h('table', { className: 'w-full text-left' },
+                      h('thead', { className: 'bg-gray-50' },
+                        h('tr', null,
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Task'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Frequency'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Total Downtime (hrs)'),
+                          h('th', { className: 'px-4 py-3 text-sm font-semibold text-gray-900' }, 'Avg Downtime (hrs)')
+                        )
+                      ),
+                      h('tbody', { className: 'divide-y divide-gray-200' },
+                        taskStats.map((task, idx) =>
+                          h('tr', { key: idx, className: 'hover:bg-gray-50' },
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-900' }, task.task),
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-600' }, task.count),
+                            h('td', { className: 'px-4 py-3 text-sm text-gray-600' }, task.totalDowntime.toFixed(1)),
+                            h('td', { className: 'px-4 py-3 text-sm' },
+                              h('span', { className: `font-medium ${task.avgDowntime > 1 ? 'text-red-600' : 'text-green-600'}` }, task.avgDowntime)
+                            )
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+              ),
+
+              h('div', { ref: trendsRef, id: 'trends', className: 'mb-12 scroll-mt-40' },
+                h('h2', { className: 'text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2' },
+                  h('span', { className: 'text-3xl' }, '📈'),
+                  'Trends'
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Monthly Task Volume'),
+                  h('div', { style: { height: '350px' } },
+                    h('canvas', { id: 'monthlyVolumeChart' })
+                  )
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Monthly On-Time Rate Trend'),
+                  h('div', { style: { height: '350px' } },
+                    h('canvas', { id: 'monthlyOnTimeChart' })
+                  )
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6 mb-6' },
+                  h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'Monthly Downtime Trend'),
+                  h('div', { style: { height: '350px' } },
+                    h('canvas', { id: 'monthlyDowntimeChart' })
+                  )
+                )
+              ),
+
+              h('div', { ref: aiRef, id: 'ai', className: 'mb-12 scroll-mt-40' },
+                h('h2', { className: 'text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2' },
+                  h('span', { className: 'text-3xl' }, '🤖'),
+                  'AI Analysis'
+                ),
+                h('div', { className: 'bg-white rounded-lg shadow-sm p-6' },
+                h('h2', { className: 'text-xl font-bold text-gray-900 mb-4' }, 'AI-Powered Data Analysis'),
+                h('p', { className: 'text-gray-600 mb-6' }, 'Ask questions about your maintenance data and get AI-powered insights.'),
+                h('div', { className: 'mb-4' },
+                  h('textarea', {
+                    value: userQuery,
+                    onChange: (e) => setUserQuery(e.target.value),
+                    placeholder: 'Example: Which equipment requires the most attention? What patterns do you see in the downtime data?',
+                    className: 'w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none',
+                    rows: 4
+                  })
+                ),
+                h('button', {
+                  onClick: askAI,
+                  disabled: aiLoading || !userQuery.trim(),
+                  className: 'px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors'
+                }, aiLoading ? 'Analyzing...' : 'Ask AI'),
+                aiResponse && h('div', { className: 'mt-6 p-6 bg-blue-50 rounded-lg border border-blue-200' },
+                  h('h3', { className: 'text-lg font-bold text-gray-900 mb-3' }, 'AI Analysis'),
+                  h('div', { className: 'text-gray-700 whitespace-pre-wrap' }, aiResponse)
+                ),
+                h('div', { className: 'mt-8 p-6 bg-gray-50 rounded-lg' },
+                  h('h3', { className: 'text-lg font-bold text-gray-900 mb-3' }, 'Sample Questions'),
+                  h('ul', { className: 'space-y-2 text-gray-700' },
+                    h('li', { className: 'cursor-pointer hover:text-blue-600', onClick: () => setUserQuery('Which equipment has the highest failure rate?') }, '• Which equipment has the highest failure rate?'),
+                    h('li', { className: 'cursor-pointer hover:text-blue-600', onClick: () => setUserQuery("What's causing the most downtime?") }, "• What's causing the most downtime?"),
+                    h('li', { className: 'cursor-pointer hover:text-blue-600', onClick: () => setUserQuery('Which technicians need additional support?') }, '• Which technicians need additional support?'),
+                    h('li', { className: 'cursor-pointer hover:text-blue-600', onClick: () => setUserQuery('What maintenance tasks should we prioritize?') }, '• What maintenance tasks should we prioritize?'),
+                    h('li', { className: 'cursor-pointer hover:text-blue-600', onClick: () => setUserQuery('Are there any concerning trends in the data?') }, '• Are there any concerning trends in the data?')
+                  )
+                )
+                )
+              )
+            )
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(MaintenanceDashboard));
+    </script>
+</body>
+</html>
